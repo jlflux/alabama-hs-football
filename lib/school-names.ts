@@ -8,6 +8,17 @@ const CANONICAL_DISPLAY_OVERRIDES: Record<string, string> = {
   "central, phenix city": "Central-Phenix City",
   "central, clay county": "Central-Clay County",
   "central, hayneville": "Central-Hayneville",
+  "central, coosa": "Central-Coosa",
+  "central, florence": "Central-Florence",
+  "central, tuscaloosa": "Central-Tuscaloosa",
+  "hillcrest, evergreen": "Hillcrest-Evergreen",
+  "hillcrest, tuscaloosa": "Hillcrest-Tuscaloosa",
+  "southside, selma": "Southside-Selma",
+  "carver, montgomery": "Carver-Montgomery",
+  "booker t. washington, tuskegee": "BT Washington",
+  "booker t washington, tuskegee": "BT Washington",
+  "booker t. washington": "BT Washington",
+  "booker t washington": "BT Washington",
 };
 
 /**
