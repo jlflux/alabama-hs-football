@@ -4,12 +4,22 @@ const TYPE_SUFFIXES = [
   /\s+High School$/i,
 ];
 
+const CANONICAL_DISPLAY_OVERRIDES: Record<string, string> = {
+  "central, phenix city": "Central-Phenix City",
+  "central, clay county": "Central-Clay County",
+  "central, hayneville": "Central-Hayneville",
+};
+
 /**
  * Convert source-facing school labels into the clean public display name.
  *
  * We intentionally remove only high-school type markers. Words such as
  * Academy, Christian, Catholic, Charter and School can be meaningful parts of
  * a school's actual identity and are preserved.
+ *
+ * Ambiguous/local naming conventions belong in explicit canonical overrides,
+ * not broad punctuation rules, so we do not accidentally rename unrelated
+ * schools without review.
  */
 export function cleanSchoolName(sourceName: string): string {
   let name = sourceName.trim().replace(/\s+/g, " ");
@@ -22,7 +32,8 @@ export function cleanSchoolName(sourceName: string): string {
 
   for (const suffix of TYPE_SUFFIXES) name = name.replace(suffix, "");
 
-  return name.trim();
+  name = name.trim();
+  return CANONICAL_DISPLAY_OVERRIDES[name.toLowerCase()] ?? name;
 }
 
 /**
