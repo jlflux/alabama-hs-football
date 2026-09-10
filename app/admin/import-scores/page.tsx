@@ -33,18 +33,47 @@ export default function ImportScoresPage() {
     setError("");
     setPreview(null);
 
-    const response = await fetch("/api/admin/import-scores/preview", {
-      method: "POST",
-      body: new FormData(event.currentTarget),
-    });
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 30_000);
 
-    const body = await response.json();
-    setLoading(false);
-    if (!response.ok) {
-      setError(body.error ?? "The PDF could not be read.");
-      return;
+    try {
+      const response = await fetch("/api/admin/import-scores/preview", {
+        method: "POST",
+        body: new FormData(event.currentTarget),
+        signal: controller.signal,
+      });
+
+      const rawBody = await response.text();
+      let body: Preview | { error?: string } | null = null;
+
+      if (rawBody) {
+        try {
+          body = JSON.parse(rawBody);
+        } catch {
+          throw new Error(`The server returned an unreadable response (${response.status}).`);
+        }
+      }
+
+      if (!response.ok) {
+        const message = body && "error" in body ? body.error : undefined;
+        throw new Error(message ?? `The PDF could not be read (${response.status}).`);
+      }
+
+      if (!body || !("rows" in body)) {
+        throw new Error("The PDF parser returned no preview data.");
+      }
+
+      setPreview(body);
+    } catch (caught) {
+      if (caught instanceof DOMException && caught.name === "AbortError") {
+        setError("The import took longer than 30 seconds and was stopped. It should normally finish in a few seconds.");
+      } else {
+        setError(caught instanceof Error ? caught.message : "The PDF could not be read.");
+      }
+    } finally {
+      window.clearTimeout(timeout);
+      setLoading(false);
     }
-    setPreview(body);
   }
 
   return (
@@ -62,11 +91,12 @@ export default function ImportScoresPage() {
           <form onSubmit={submit}>
             <label className="upload-box">
               <strong>AHSAA scores PDF</strong>
-              <span className="muted">Select the weekly schedule/results PDF.</span>
+              <span className="muted">Select the weekly schedule/results PDF. A normal preview should take only a few seconds.</span>
               <input name="file" type="file" accept="application/pdf,.pdf" required />
             </label>
             <button className="button" disabled={loading}>{loading ? "Reading PDF..." : "Read PDF & Preview"}</button>
           </form>
+          {loading && <p className="muted">Extracting score rows… this will stop automatically if it takes longer than 30 seconds.</p>}
           {error && <p className="import-error">{error}</p>}
         </div>
 
